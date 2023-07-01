@@ -1,7 +1,7 @@
 ## imports
 import torch
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
-from transformers import BertTokenizer, BertForSequenceClassification
+from transformers import BertTokenizer, BertModel , BertConfig
 from sklearn.model_selection import train_test_split
 
 import pandas as pd
@@ -10,6 +10,10 @@ import numpy as np
 from tqdm import trange
 import random
 from functions import preprocessW
+
+from torch import cuda
+device = 'cuda' if cuda.is_available() else 'cpu'
+print(device)
 
 ## unpack data 
 test_data = pd.read_parquet('data/test-00000-of-00001-35e9a9274361daed.parquet', engine='pyarrow')
@@ -27,9 +31,14 @@ if(1):# testing criterion
     print(loss)
 
 ##pre process
-x_train = x_train.apply(preprocessW)# convert to lower case and add symbols to data 
-x_test = x_test.apply(preprocessW)
+
 
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased') # define pre-trained tokenizer
+sample = x_train[0]
+x_train = x_train.apply(preprocessW,args = (400,tokenizer))# convert to lower case and add symbols to data 
+x_test = x_test.apply(preprocessW,args = (400,tokenizer))
 
-print(x_train[0])
+if(1):# testing tokenizer
+    print("""original sentence:\n{}\n preprocessed sentence:\n{}\n 
+          tokenized sentence:\n{}\n""".format(sample,x_train[0],tokenizer.convert_tokens_to_ids(x_train[0])))
+    
