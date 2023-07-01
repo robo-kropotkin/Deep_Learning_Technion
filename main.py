@@ -26,6 +26,10 @@ if(1):# testing criterion
     loss = criterion(random_labels, torch.tensor(y_train))
     print(loss)
 
+##pre process
+x_train = x_train.apply(preprocessW)# convert to lower case and add symbols to data 
+x_test = x_test.apply(preprocessW)
 
-tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
-print()
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased') # define pre-trained tokenizer
+
+print(x_train[0])
