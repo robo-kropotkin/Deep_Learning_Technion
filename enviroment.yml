@@ -1,4 +1,4 @@
-name: deep_learn
+Name: Deep_project
 channels:
   - conda-forge
   - pytorch
@@ -17,6 +17,8 @@ dependencies:
   - blas=1.0=mkl
   - bleach=4.1.0=pyhd3eb1b0_0
   - boost-cpp=1.73.0=h2bbff1b_11
+  - boto3=1.21.32=pyhd3eb1b0_0
+  - botocore=1.24.32=pyhd3eb1b0_0
   - brotli=1.0.9=h2bbff1b_7
   - brotli-bin=1.0.9=h2bbff1b_7
   - brotli-python=1.0.9=py36h82bb817_2
@@ -29,6 +31,7 @@ dependencies:
   - cffi=1.14.6=py36h2bbff1b_0
   - chardet=4.0.0=py36haa95532_1003
   - charset-normalizer=2.0.4=pyhd3eb1b0_0
+  - click=8.0.3=pyhd3eb1b0_0
   - colorama=0.4.4=pyhd3eb1b0_0
   - conllu=4.4.1=pyhd3eb1b0_0
   - cpuonly=2.0=0
@@ -62,6 +65,7 @@ dependencies:
   - ipython_genutils=0.2.0=pyhd3eb1b0_1
   - jedi=0.18.0=py36haa95532_1
   - jinja2=3.0.3=pyhd3eb1b0_0
+  - jmespath=0.10.0=pyhd3eb1b0_0
   - joblib=1.0.1=pyhd3eb1b0_0
   - jpeg=9b=vc14h4d7706e_1
   - jsonschema=3.2.0=pyhd3eb1b0_2
@@ -138,6 +142,7 @@ dependencies:
   - python-dateutil=2.8.2=pyhd3eb1b0_0
   - python-snappy=0.6.0=py36hd77b12b_3
   - python-xxhash=2.0.2=py36h2bbff1b_0
+  - python_abi=3.6=2_cp36m
   - pytorch=1.10.2=py3.6_cpu_0
   - pytorch-mutex=1.0=cpu
   - pytz=2021.3=pyhd3eb1b0_0
@@ -147,7 +152,10 @@ dependencies:
   - pyzstd=0.14.4=py36h2bbff1b_3
   - qt=5.9.7=vc14h73c81de_0
   - re2=2022.04.01=hd77b12b_0
+  - regex=2021.8.3=py36h2bbff1b_0
   - requests=2.27.1=pyhd3eb1b0_0
+  - s3transfer=0.5.0=pyhd3eb1b0_0
+  - sacremoses=0.0.43=pyhd3eb1b0_0
   - scikit-learn=0.24.2=py36hf11a4ad_1
   - scipy=1.5.2=py36h9439919_0
   - seaborn=0.11.2=pyhd3eb1b0_0
@@ -169,6 +177,7 @@ dependencies:
   - torchvision=0.11.3=py36_cpu
   - tornado=6.1=py36h2bbff1b_0
   - traitlets=4.3.3=py36haa95532_0
+  - transformers=2.1.1=pyhd3eb1b0_0
   - typing-extensions=4.1.1=hd3eb1b0_0
   - typing_extensions=4.1.1=pyh06a4308_0
   - uriparser=0.9.3=h33f27b4_1
@@ -189,25 +198,17 @@ dependencies:
   - zlib=1.2.11=vc14h1cdd9ab_1
   - zstd=1.4.9=h19a0ad4_0
   - pip:
-    - alembic==1.7.7
-    - autopage==0.5.1
-    - cliff==3.10.1
-    - cmaes==0.9.0
-    - cmd2==2.4.3
-    - colorlog==6.7.0
-    - greenlet==2.0.2
-    - importlib-resources==5.4.0
-    - mako==1.1.6
-    - opencv-python==3.4.16.57
-    - optuna==3.0.6
-    - pbr==5.11.1
-    - portalocker==2.7.0
-    - prettytable==2.5.0
-    - pyarrow==6.0.1
-    - pyperclip==1.8.2
-    - pyreadline3==3.4.1
-    - pyyaml==6.0
-    - sqlalchemy==1.4.47
-    - stevedore==3.5.2
-    - torchdata==0.3.0a0
-    - tqdm==4.64.1
+      - autopage==0.5.1
+      - cmd2==2.4.3
+      - greenlet==2.0.2
+      - importlib-resources==5.4.0
+      - mako==1.1.6
+      - pbr==5.11.1
+      - prettytable==2.5.0
+      - pyarrow==6.0.1
+      - pyperclip==1.8.2
+      - pyreadline3==3.4.1
+      - pyyaml==6.0
+      - sqlalchemy==1.4.47
+      - stevedore==3.5.2
+      - tqdm==4.64.1
