@@ -1,4 +1,4 @@
-name: Deep_project
+Name: Deep_project
 channels:
   - conda-forge
   - pytorch
@@ -38,6 +38,7 @@ dependencies:
   - cryptography=35.0.0=py36h71e12ea_0
   - cycler=0.11.0=pyhd3eb1b0_0
   - dataclasses=0.8=pyh4f3eec9_6
+  - datasets=1.12.1=pyhd3eb1b0_0
   - decorator=5.1.1=pyhd3eb1b0_0
   - defusedxml=0.7.1=pyhd3eb1b0_0
   - dill=0.3.4=pyhd3eb1b0_0
