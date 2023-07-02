@@ -14,13 +14,11 @@ def preprocessW(sentence, maxlength, tokenizer):
     output = "[CLS] " + sentence.lower()
     while (output != expand_contractions(output)):
       output = expand_contractions(output)
-    originals = ["."]
-    convert_to = [". [SEP]"]
-    for index, word in enumerate(originals):
-        output = output.replace(word, convert_to[index])
-    output = tokenizer.tokenize(output)
-    for i in range(len(output), maxlength):
-      output.append('[PAD]')
+    # orginals = ["."]
+    # convert_to = [". [SEP]"]
+    # for index,word in enumerate(orginals):
+    #     output = output.replace(word, convert_to[index])
+    # output = tokenizer.tokenize(output)
+    # for i in range(len(output), maxlength):
+    #   output.append('[PAD]')
     return output
-
-
