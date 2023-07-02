@@ -1,21 +1,20 @@
-## imports
 import torch
+import pandas as pd
+import numpy as np
+import random
+from tqdm import trange
+from functions import preprocessW
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
 from transformers import BertTokenizer, BertModel , BertConfig
 from sklearn.model_selection import train_test_split
-
-import pandas as pd
-import numpy as np
-
-from tqdm import trange
-import random
-from functions import preprocessW
-
 from torch import cuda
+
+
 device = 'cuda' if cuda.is_available() else 'cpu'
 print(device)
 
-## unpack data 
+
+# unpack data
 test_data = pd.read_parquet('data/test-00000-of-00001-35e9a9274361daed.parquet', engine='pyarrow')
 train_data = pd.read_parquet('data/train-00000-of-00001-b943ea66e0040b18.parquet', engine='pyarrow')
 x_train = train_data["synopsis"]
@@ -24,28 +23,26 @@ x_test = test_data["synopsis"]
 y_test = test_data["genre"]
 labels = y_train.unique()
 y_train = y_train.replace(labels, np.arange(len(labels)))
-criterion = torch.nn.CrossEntropyLoss()# defining criterion
-if(0):# testing criterion
-    random_labels = torch.ones((len(x_train), len(labels)))
-    loss = criterion(random_labels, torch.tensor(y_train))
-    print(loss)
+criterion = torch.nn.CrossEntropyLoss() # defining criterion
 
-##pre process
+# pre process
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased') # define pre-trained tokenizer
 sample = x_train[0]
-x_train = x_train.apply(preprocessW,args = (400,tokenizer))# convert to lower case and add symbols to data 
-x_test = x_test.apply(preprocessW,args = (400,tokenizer))
+x_train = x_train.apply(preprocessW, args=(400, tokenizer)) # convert to lower case and add symbols to data
+x_test = x_test.apply(preprocessW, args=(400, tokenizer))
+
 
 if(0):# testing tokenizer
     print("""original sentence:\n{}\n preprocessed sentence:\n{}\n 
           tokenized sentence:\n{}\n""".format(sample,x_train[0],tokenizer.convert_tokens_to_ids(x_train[0])))
 
+
 # TODO: add data loader
-## TODO: create CustomDataset
-## TODO: add data loader
+# TODO: create CustomDataset
+# TODO: add data loader
 
 
-## Creating the class moodel to fine tune and passing it to device
+# Creating the class moodel to fine tune and passing it to device
 class MovieClassifier(torch.nn.Module): 
     def __init__(self):
         super(MovieClassifier, self).__init__()
