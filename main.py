@@ -32,11 +32,6 @@ x_train = x_train.apply(preprocessW, args=(400, tokenizer)) # convert to lower c
 x_test = x_test.apply(preprocessW, args=(400, tokenizer))
 
 
-if(0):# testing tokenizer
-    print("""original sentence:\n{}\n preprocessed sentence:\n{}\n 
-          tokenized sentence:\n{}\n""".format(sample,x_train[0],tokenizer.convert_tokens_to_ids(x_train[0])))
-
-
 # TODO: add data loader
 # TODO: create CustomDataset
 # TODO: add data loader
@@ -55,6 +50,7 @@ class MovieClassifier(torch.nn.Module):
         output_2 = self.l2(output_1)
         output = self.l3(output_2)
         return output
+
 
 model = MovieClassifier()
 model.to(device)

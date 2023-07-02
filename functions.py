@@ -24,9 +24,3 @@ def preprocessW(sentence, maxlength, tokenizer):
     return output
 
 
-if __name__ == "__main__":
-    from transformers import BertTokenizer
-    tokenizer = BertTokenizer.from_pretrained('bert-base-uncased') # define pre-trained tokenizer
-    sentence = "ok this is a TEST you'll've to watch."
-    sentence = preprocessW(sentence,400,tokenizer)
-    print(sentence)
