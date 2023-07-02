@@ -1,56 +1,130 @@
 import torch
 import pandas as pd
 import numpy as np
+import sys
 import random
-from tqdm import trange
+from tqdm import tqdm
+from torch.utils.data import Dataset, DataLoader, RandomSampler, SequentialSampler
+from transformers import BertTokenizer, BertModel, BertConfig
+from sklearn.model_selection import train_test_split
 from functions import preprocessW
 from torch.utils.data import TensorDataset, DataLoader, RandomSampler, SequentialSampler
-from transformers import BertTokenizer, BertModel , BertConfig
+from transformers import BertTokenizer, BertModel, BertConfig
 from sklearn.model_selection import train_test_split
 from torch import cuda
 
-
 device = 'cuda' if cuda.is_available() else 'cpu'
-print(device)
+tqdm.pandas()
 
+# define parameters
+MAX_LEN = 400
+TRAIN_BATCH_SIZE = 8
+VALID_BATCH_SIZE = 4
+EPOCHS = 1
+LEARNING_RATE = 1e-05
+print("Loading tokenizer...")
+tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
+criterion = torch.nn.CrossEntropyLoss()  # defining criterion
 
 # unpack data
 test_data = pd.read_parquet('data/test-00000-of-00001-35e9a9274361daed.parquet', engine='pyarrow')
 train_data = pd.read_parquet('data/train-00000-of-00001-b943ea66e0040b18.parquet', engine='pyarrow')
-x_train = train_data["synopsis"]
-y_train = train_data["genre"]
-x_test = test_data["synopsis"]
-y_test = test_data["genre"]
-labels = y_train.unique()
-y_train = y_train.replace(labels, np.arange(len(labels)))
-criterion = torch.nn.CrossEntropyLoss() # defining criterion
+if 'debug' in sys.argv:
+    test_data = test_data[:10]
+    train_data = train_data[:100]
+
+labels = train_data["genre"].unique()
 
 # pre process
-tokenizer = BertTokenizer.from_pretrained('bert-base-uncased') # define pre-trained tokenizer
-sample = x_train[0]
-x_train = x_train.apply(preprocessW, args=(400, tokenizer)) # convert to lower case and add symbols to data
-x_test = x_test.apply(preprocessW, args=(400, tokenizer))
+train_data["genre"] = train_data["genre"].replace(labels, np.arange(len(labels)))
+test_data["genre"] = test_data["genre"].replace(labels, np.arange(len(labels)))
+sample = train_data["synopsis"][0]
+train_data["synopsis"] = train_data["synopsis"].apply(preprocessW, args=(400, tokenizer))  # convert to lower case and add symbols to data
+test_data["synopsis"] = test_data["synopsis"].apply(preprocessW, args=(400, tokenizer))
 
 
-# TODO: add data loader
-# TODO: create CustomDataset
-# TODO: add data loader
 
 
-# Creating the class moodel to fine tune and passing it to device
-class MovieClassifier(torch.nn.Module): 
+# Define data loader
+class CustomDataset(Dataset):
+    def __init__(self, dataframe, tokenizer, max_len):
+        self.tokenizer = tokenizer
+        self.data = dataframe
+        self.synopsi = dataframe["synopsis"]
+        self.targets = dataframe["genre"]
+        self.max_len = max_len
+
+    def __len__(self):
+        return len(self.synopsi)
+
+    def __getitem__(self, index):
+        inputs = self.tokenizer.encode_plus(self.synopsi[index])
+        ids = inputs['input_ids']
+        mask = np.array(ids) != 0
+        token_type_ids = inputs["token_type_ids"]
+
+        return torch.tensor(ids, dtype=torch.long), torch.tensor(mask, dtype=torch.long), torch.tensor(token_type_ids, dtype=torch.long), torch.tensor(self.targets[index], dtype=torch.long)
+
+
+
+training_set = CustomDataset(train_data, tokenizer, MAX_LEN)
+testing_set = CustomDataset(test_data, tokenizer, MAX_LEN)
+
+train_params = {'batch_size': TRAIN_BATCH_SIZE,
+                'shuffle': True,
+                'num_workers': 0
+                }
+
+test_params = {'batch_size': VALID_BATCH_SIZE,
+               'shuffle': True,
+               'num_workers': 0
+               }
+
+training_loader = DataLoader(training_set, **train_params)
+testing_loader = DataLoader(testing_set, **test_params)   
+
+# Creating the class model to fine tune and passing it to device
+class MovieClassifier(torch.nn.Module):
     def __init__(self):
         super(MovieClassifier, self).__init__()
-        self.l1 = transformers.BertModel.from_pretrained('bert-base-uncased')
+        self.l1 = BertModel.from_pretrained('bert-base-uncased')
         self.l2 = torch.nn.Dropout(0.3)
         self.l3 = torch.nn.Linear(768, 10)
-    
+        self.l4 = torch.nn.Sigmoid()
+        
+
     def forward(self, ids, mask, token_type_ids):
-        _, output_1= self.l1(ids, attention_mask = mask, token_type_ids = token_type_ids)
+        _, output_1 = self.l1(ids, attention_mask=mask, token_type_ids=token_type_ids)
         output_2 = self.l2(output_1)
-        output = self.l3(output_2)
+        output_3 = self.l3(output_2)
+        output = self.l4(output_3)
         return output
 
 
 model = MovieClassifier()
 model.to(device)
+
+optimizer = torch.optim.Adam(params=model.parameters(), lr=LEARNING_RATE)
+
+
+# training function
+def train(epoch):
+    model.train()
+    for batch_num, data in enumerate(training_loader, 0):
+        ids, mask, token_type_ids, targets = data
+
+        outputs = model(ids, mask, token_type_ids)
+
+        optimizer.zero_grad()
+        loss = criterion(outputs, targets)
+        if batch_num % 5000 == 0:
+            print(f'Epoch: {epoch}, Loss:  {loss.item()}')
+
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+
+
+# training
+for epoch in range(EPOCHS):
+    train(epoch)
