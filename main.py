@@ -20,8 +20,8 @@ tqdm.pandas()
 MAX_LEN = 400
 TRAIN_BATCH_SIZE = 8
 VALID_BATCH_SIZE = 4
-EPOCHS = 1
-LEARNING_RATE = 1e-05
+EPOCHS = 4
+LEARNING_RATE = 1e-5
 print("Loading tokenizer...")
 tokenizer = BertTokenizer.from_pretrained('bert-base-uncased')
 criterion = torch.nn.CrossEntropyLoss()  # defining criterion
@@ -39,10 +39,9 @@ labels = train_data["genre"].unique()
 train_data["genre"] = train_data["genre"].replace(labels, np.arange(len(labels)))
 test_data["genre"] = test_data["genre"].replace(labels, np.arange(len(labels)))
 sample = train_data["synopsis"][0]
-train_data["synopsis"] = train_data["synopsis"].apply(preprocessW, args=(400, tokenizer))  # convert to lower case and add symbols to data
+train_data["synopsis"] = train_data["synopsis"].apply(preprocessW, args=(
+400, tokenizer))  # convert to lower case and add symbols to data
 test_data["synopsis"] = test_data["synopsis"].apply(preprocessW, args=(400, tokenizer))
-
-
 
 
 # Define data loader
@@ -63,8 +62,10 @@ class CustomDataset(Dataset):
         mask = np.array(ids) != 0
         token_type_ids = inputs["token_type_ids"]
 
-        return torch.tensor(ids, dtype=torch.long), torch.tensor(mask, dtype=torch.long), torch.tensor(token_type_ids, dtype=torch.long), torch.tensor(self.targets[index], dtype=torch.long)
-
+        return torch.tensor(ids, dtype=torch.long).to(device), \
+               torch.tensor(mask, dtype=torch.long).to(device), \
+               torch.tensor(token_type_ids, dtype=torch.long).to(device), \
+               torch.tensor(self.targets[index], dtype=torch.long).to(device)
 
 
 training_set = CustomDataset(train_data, tokenizer, MAX_LEN)
@@ -81,7 +82,8 @@ test_params = {'batch_size': VALID_BATCH_SIZE,
                }
 
 training_loader = DataLoader(training_set, **train_params)
-testing_loader = DataLoader(testing_set, **test_params)   
+testing_loader = DataLoader(testing_set, **test_params)
+
 
 # Creating the class model to fine tune and passing it to device
 class MovieClassifier(torch.nn.Module):
@@ -90,21 +92,29 @@ class MovieClassifier(torch.nn.Module):
         self.l1 = BertModel.from_pretrained('bert-base-uncased')
         self.l2 = torch.nn.Dropout(0.3)
         self.l3 = torch.nn.Linear(768, 10)
-        self.l4 = torch.nn.Sigmoid()
-        
 
     def forward(self, ids, mask, token_type_ids):
-        _, output_1 = self.l1(ids, attention_mask=mask, token_type_ids=token_type_ids)
+        output_1 = self.l1(ids, attention_mask=mask, token_type_ids=token_type_ids).pooler_output
         output_2 = self.l2(output_1)
-        output_3 = self.l3(output_2)
-        output = self.l4(output_3)
+        output = self.l3(output_2)
         return output
+
+
+class warmup_scheduler(torch.optim.lr_scheduler.LRScheduler):
+    def __init__(self, optimizer, warmup_steps, last_epoch=-1, verbose=False):
+        self.warmup_steps = warmup_steps
+        super().__init__(optimizer, last_epoch=-1, verbose=False)
+
+    def get_lr(self):
+        return [group['lr'] * min(self._step_count / self.warmup_steps ** (-1.5), self._step_count ** (-0.5)) for group
+                in self.optimizer.param_groups]
 
 
 model = MovieClassifier()
 model.to(device)
 
 optimizer = torch.optim.Adam(params=model.parameters(), lr=LEARNING_RATE)
+scheduler = warmup_scheduler(optimizer, warmup_steps=4000)
 
 
 # training function
@@ -117,7 +127,7 @@ def train(epoch):
 
         optimizer.zero_grad()
         loss = criterion(outputs, targets)
-        if batch_num % 5000 == 0:
+        if batch_num % 500 == 0:
             print(f'Epoch: {epoch}, Loss:  {loss.item()}')
 
         optimizer.zero_grad()
